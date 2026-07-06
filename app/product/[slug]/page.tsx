@@ -151,7 +151,7 @@ export default async function ProductPage({ params }: { params: { slug: string }
         <Section title="E · Materiales y contenido reciclado">
           {matPrincipal.map((m, i) => m && (
             <div key={i} style={{ marginBottom: 24 }}>
-              <div style={{ fontWeight: 500, fontSize: 13, marginBottom: 8, color: 'var(--text-muted)', textTransform: 'uppercase', fontSize: 11, letterSpacing: '0.06em' }}>
+              <div style={{ fontWeight: 500, fontSize: 11, marginBottom: 8, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
                 Material principal
               </div>
               <Row label="Material" value={m.name} />
