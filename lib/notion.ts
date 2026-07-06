@@ -19,7 +19,7 @@ function getText(prop: any): string {
   if (prop.type === "title") return prop.title?.map((t: any) => t.plain_text).join("") ?? "";
   if (prop.type === "rich_text") return prop.rich_text?.map((t: any) => t.plain_text).join("") ?? "";
   if (prop.type === "select") return prop.select?.name ?? "";
-  if (prop.type === "multi_select") return prop.multi_select?.map((s: any) => s.name).join(", ") ?? "";
+  if (prop.type === "multi_select") return prop.multi_select?.map((s: any) => s.name).join(" · ") ?? "";
   if (prop.type === "number") return prop.number != null ? prop.number.toString() : "";
   if (prop.type === "url") return prop.url ?? "";
   if (prop.type === "date") return prop.date?.start ?? "";
@@ -33,6 +33,13 @@ function getText(prop: any): string {
 function getRelationIds(prop: any): string[] {
   if (!prop || prop.type !== "relation") return [];
   return prop.relation?.map((r: any) => r.id) ?? [];
+}
+
+// Extract page ID from Notion URL
+function urlToId(url: string): string {
+  const match = url.match(/([a-f0-9]{32})/)
+  if (match) return match[1]
+  return url.replace(/-/g, '')
 }
 
 export async function getAllReferencias() {
@@ -122,73 +129,97 @@ export async function getMaterial(id: string) {
 export async function getColeccion(id: string) {
   const page = await notion.pages.retrieve({ page_id: id }) as any;
   const p = page.properties;
+
+  // fin_de_vida is multi_select
+  const finDeVida = p["fin_de_vida"]?.multi_select?.map((s: any) => s.name).join(" ") ?? ""
+  // disenadores is multi_select
+  const disenadores = p["disenadores"]?.multi_select?.map((s: any) => s.name).join(", ") ?? ""
+
   return {
     name: getText(p["Name"]),
     ano_diseno: getText(p["ano_diseno"]),
-    disenadores: getText(p["disenadores"]),
+    disenadores,
     vida_util_anos: getText(p["vida_util_anos"]),
     reparabilidad: getText(p["reparabilidad"]),
     desmontaje: getText(p["posibilidad_desmontaje"]),
-    fin_de_vida: getText(p["fin_de_vida"]),
+    fin_de_vida: finDeVida,
     certIds: getRelationIds(p["certificaciones_coleccion"]),
     normasIds: getRelationIds(p["normas_coleccion"]),
   };
 }
 
 export async function getCertificacion(id: string) {
-  const page = await notion.pages.retrieve({ page_id: id }) as any;
-  const p = page.properties;
-  return {
-    name: getText(p["Name"]),
-    tipo: getText(p["tipo"]),
-    organismo: getText(p["organismo_emisor"]),
-    ambito: getText(p["ambito"]),
-    pdf: getText(p["documento_pdf"]),
-  };
-}
-
-export async function getNorma(id: string) {
-  const page = await notion.pages.retrieve({ page_id: id }) as any;
-  const p = page.properties;
-  return {
-    name: getText(p["NORMAS APLICABLES"] ?? p["Name"]),
-    categoria: getText(p["Categoría"]),
-    descripcion: getText(p["Descripción"]),
-    organismo: getText(p["Organismo"]),
-    ambito: getText(p["Ámbito"]),
-  };
-}
-
-export async function getDocumentos(referenciaId: string) {
-  const res = await notion.databases.query({
-    database_id: DB.DOCUMENTOS,
-    filter: { property: "Referencia a", relation: { contains: referenciaId } },
-  });
-  return res.results.map((page: any) => {
+  try {
+    const page = await notion.pages.retrieve({ page_id: id }) as any;
     const p = page.properties;
     return {
       name: getText(p["Name"]),
-      tipo: getText(p["tipo_documento"]),
-      idiomas: p["idioma"]?.multi_select?.map((s: any) => s.name).join(", ") ?? "",
-      url: getText(p["url_publico"]),
+      tipo: getText(p["tipo"]),
+      organismo: getText(p["organismo_emisor"]),
+      ambito: getText(p["ambito"]),
+      pdf: getText(p["documento_pdf"]),
     };
-  });
+  } catch {
+    return null;
+  }
+}
+
+export async function getNorma(id: string) {
+  try {
+    const page = await notion.pages.retrieve({ page_id: id }) as any;
+    const p = page.properties;
+    // The title property might be named differently
+    const name = getText(p["NORMAS APLICABLES"]) || getText(p["Name"]) || ""
+    return {
+      name,
+      categoria: getText(p["Categoría"]),
+      descripcion: getText(p["Descripción"]),
+      organismo: getText(p["Organismo"]),
+      ambito: getText(p["Ámbito"]),
+    };
+  } catch {
+    return null;
+  }
+}
+
+export async function getDocumentos(referenciaId: string) {
+  try {
+    const res = await notion.databases.query({
+      database_id: DB.DOCUMENTOS,
+      filter: { property: "Referencia a", relation: { contains: referenciaId } },
+    });
+    return res.results.map((page: any) => {
+      const p = page.properties;
+      return {
+        name: getText(p["Name"]),
+        tipo: getText(p["tipo_documento"]),
+        idiomas: p["idioma"]?.multi_select?.map((s: any) => s.name).join(", ") ?? "",
+        url: getText(p["url_publico"]),
+      };
+    });
+  } catch {
+    return [];
+  }
 }
 
 export async function getMasa(referenciaId: string) {
-  const res = await notion.databases.query({
-    database_id: DB.MASA,
-    filter: { property: "Seleccionar", relation: { contains: referenciaId } },
-  });
-  if (!res.results.length) return null;
-  const p = (res.results[0] as any).properties;
-  return {
-    listones: getText(p["Listones (kg)"]),
-    estructura: getText(p["Estructura (kg)"]),
-    tornilleria: getText(p["Tornillería (kg)"]),
-    embalaje: getText(p["Embalaje (kg) — not included in Total Weight"]),
-    total: getText(p["Total Weight (kg)*"]),
-  };
+  try {
+    const res = await notion.databases.query({
+      database_id: DB.MASA,
+      filter: { property: "Seleccionar", relation: { contains: referenciaId } },
+    });
+    if (!res.results.length) return null;
+    const p = (res.results[0] as any).properties;
+    return {
+      listones: getText(p["Listones (kg)"]),
+      estructura: getText(p["Estructura (kg)"]),
+      tornilleria: getText(p["Tornillería (kg)"]),
+      embalaje: getText(p["Embalaje (kg) — not included in Total Weight"]),
+      total: getText(p["Total Weight (kg)*"]),
+    };
+  } catch {
+    return null;
+  }
 }
 
 export async function getEmpresa() {
