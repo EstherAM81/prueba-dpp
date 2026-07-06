@@ -67,7 +67,7 @@ export default async function Home() {
                     marginBottom: 8
                   }}>{ref.referencia}</div>
                   <div style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.4 }}>
-                    {ref.nombre_comercial_completo || `${ref.tipologia} ${ref.longitud_m ? ref.longitud_m + ' m' : ''}`}
+                    {(ref.nombre_comercial_completo || `${ref.tipologia} ${ref.longitud_m ? ref.longitud_m + ' m' : ''}`).replace(/@/g, '')}
                   </div>
                   {ref.peso_kg && (
                     <div style={{ marginTop: 12, fontSize: 12, color: 'var(--text-muted)' }}>

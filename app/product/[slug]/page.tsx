@@ -34,6 +34,29 @@ function Row({ label, value, mono, link }: { label: string; value?: string; mono
   )
 }
 
+
+function RowPending({ label, nota }: { label: string; nota?: string }) {
+  return (
+    <div style={{
+      display: 'grid', gridTemplateColumns: '220px 1fr', gap: 16,
+      padding: '10px 0', borderBottom: '1px solid var(--border)', alignItems: 'start'
+    }}>
+      <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>{label}</span>
+      <span style={{
+        fontSize: 12,
+        color: '#C0392B',
+        background: '#FDF0EE',
+        padding: '3px 8px',
+        borderRadius: 4,
+        display: 'inline-block',
+        fontFamily: 'var(--font-mono)'
+      }}>
+        ⚠ Pendiente{nota ? ` — ${nota}` : ''}
+      </span>
+    </div>
+  )
+}
+
 function LCACard({ label, value, unit }: { label: string; value: string; unit: string }) {
   if (!value) return null
   return (
@@ -90,7 +113,7 @@ export default async function ProductPage({ params }: { params: { slug: string }
         </div>
         <div style={{ fontFamily: 'var(--font-mono)', fontSize: 14, color: 'var(--text-muted)', marginBottom: 8 }}>{ref.referencia}</div>
         <h1 style={{ fontSize: 28, fontWeight: 300, letterSpacing: '-0.02em', lineHeight: 1.2 }}>
-          {ref.nombre_comercial_completo || ref.referencia}
+          {(ref.nombre_comercial_completo || ref.referencia).replace(/@/g, '')}
         </h1>
         {ref.dpp_issued_at && <p style={{ marginTop: 10, color: 'var(--text-muted)', fontSize: 13 }}>Emitido: {ref.dpp_issued_at}</p>}
       </header>
@@ -111,11 +134,10 @@ export default async function ProductPage({ params }: { params: { slug: string }
         <Row label="Colección" value={coleccion?.name} />
         {coleccion?.ano_diseno && <Row label="Año de diseño" value={coleccion.ano_diseno} />}
         {coleccion?.disenadores && <Row label="Diseñadores" value={coleccion.disenadores} />}
-        <Row label="Longitud" value={ref.longitud_m ? `${ref.longitud_m} m` : undefined} />
         <Row label="Dimensiones (largo × ancho × alto)" value={ref.dim_largo_cm && ref.dim_ancho_cm && ref.dim_alto_cm ? `${ref.dim_largo_cm} × ${ref.dim_ancho_cm} × ${ref.dim_alto_cm} cm` : undefined} />
-        <Row label="Altura de asiento" value={ref.altura_asiento_cm ? `${ref.altura_asiento_cm} cm` : undefined} />
-        <Row label="Número de plazas" value={ref.num_plazas} />
-        <Row label="Adaptado silla de ruedas" value={ref.adaptado_silla_ruedas} />
+        {ref.adaptado_silla_ruedas === "Sí" && <Row label="Adaptado silla de ruedas" value="Sí" />}
+        <RowPending label="GTIN (14 dígitos)" nota="Registrar en GS1 Spain" />
+        <RowPending label="Código eCl@ss" nota="Asignar código de categoría de producto" />
       </Section>
 
       {/* C · OPERADOR */}
@@ -132,6 +154,7 @@ export default async function ProductPage({ params }: { params: { slug: string }
           <Row label="Número EORI" value={empresa.eori} />
           <Row label="Web" value={empresa.web} link />
           <Row label="Email contacto DPP" value={empresa.email_dpp} />
+          <RowPending label="GLN (Global Location Number)" nota="Registrar en GS1 Spain" />
         </Section>
       )}
 
@@ -146,9 +169,16 @@ export default async function ProductPage({ params }: { params: { slug: string }
         <Row label="Embalaje (excluido del peso)" value={ref.embalaje_kg ? `${ref.embalaje_kg} kg · Cartón canal BC · 100% reciclado · Clase A` : undefined} />
       </Section>
 
-      {/* E · MATERIALES */}
+      {/* E2 · REACH */}
+      <Section title="E · Sustancias y cumplimiento químico">
+        <RowPending label="Sustancias de preocupación (SVHC)" nota="Solicitar SDS a cada proveedor de material" />
+        <RowPending label="SVHC — Candidate List ECHA" nota="Confirmar con proveedor si contienen SVHC >0,1% en peso" />
+        <RowPending label="Declaración REACH" nota="Emitir declaración formal una vez recibidas las SDS" />
+      </Section>
+
+      {/* F · MATERIALES */}
       {(matPrincipal.length > 0 || matSecundario.length > 0) && (
-        <Section title="E · Materiales y contenido reciclado">
+        <Section title="F · Materiales y contenido reciclado">
           {matPrincipal.map((m, i) => m && (
             <div key={i} style={{ marginBottom: 24 }}>
               <div style={{ fontWeight: 500, fontSize: 11, marginBottom: 8, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
@@ -182,7 +212,7 @@ export default async function ProductPage({ params }: { params: { slug: string }
 
       {/* F · LCA */}
       {lca && (
-        <Section title="F · Huella de carbono y LCA">
+        <Section title="G · Huella de carbono y LCA">
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 12, marginBottom: 24 }}>
             <LCACard label="GWP sin biogénico" value={lca.gwp_no_biogenico} unit="kg CO₂ eq" />
             <LCACard label="GWP con biogénico" value={lca.gwp_con_biogenico} unit="kg CO₂ eq" />
@@ -203,17 +233,21 @@ export default async function ProductPage({ params }: { params: { slug: string }
 
       {/* G · SOSTENIBILIDAD */}
       {coleccion && (
-        <Section title="G · Sostenibilidad y fin de vida">
+        <Section title="H · Sostenibilidad y fin de vida">
           <Row label="Reparabilidad" value={coleccion.reparabilidad} />
           <Row label="Desmontaje" value={coleccion.desmontaje} />
           <Row label="Vida útil declarada" value={coleccion.vida_util_anos ? `${coleccion.vida_util_anos} años` : undefined} />
-          <Row label="Fin de vida" value={coleccion.fin_de_vida} />
+          <Row label="Fin de vida" value="Desmontaje manual. Separación por material para reciclaje diferenciado." />
+          <Row label="Gestión fin de vida" value="A cargo del operador responsable de la instalación, según normativa local de residuos" />
+          <RowPending label="Clase de reciclabilidad (A-D)" nota="Realizar evaluación según metodología declarada" />
+          <RowPending label="URL take-back / fin de vida" nota="Crear URL pública QR-resolvable para gestión de residuos" />
+          <RowPending label="URL repuestos (10+ años)" nota="Crear página o email específico para solicitar recambios" />
         </Section>
       )}
 
       {/* H · CERTIFICACIONES */}
       {certificaciones.length > 0 && (
-        <Section title="H · Certificaciones">
+        <Section title="I · Certificaciones">
           {certificaciones.map((cert, i) => cert && (
             <div key={i} style={{ padding: '12px 0', borderBottom: '1px solid var(--border)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16 }}>
@@ -236,7 +270,7 @@ export default async function ProductPage({ params }: { params: { slug: string }
 
       {/* I · NORMAS */}
       {normas.length > 0 && (
-        <Section title="I · Normas aplicables">
+        <Section title="J · Normas aplicables">
           {normas.map((norma, i) => norma && (
             <div key={i} style={{ padding: '10px 0', borderBottom: '1px solid var(--border)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16 }}>
@@ -251,7 +285,7 @@ export default async function ProductPage({ params }: { params: { slug: string }
 
       {/* J · DOCUMENTOS */}
       {documentos.length > 0 && (
-        <Section title="J · Documentación técnica">
+        <Section title="K · Documentación técnica">
           {documentos.map((doc, i) => (
             <div key={i} style={{ padding: '10px 0', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16 }}>
               <div>
@@ -268,6 +302,14 @@ export default async function ProductPage({ params }: { params: { slug: string }
           ))}
         </Section>
       )}
+
+      {/* L · DECLARACIONES */}
+      <Section title="L · Declaraciones de conformidad">
+        <RowPending label="Declaración EUDR" nota="Emitir declaración formal de diligencia debida (madera)" />
+        <RowPending label="Declaración REACH" nota="Emitir declaración formal Reglamento (CE) 1907/2006" />
+        <RowPending label="Declaración conformidad ESPR" nota="Emitir cuando entre en vigor el acto delegado para mobiliario" />
+        <RowPending label="EPD verificada por tercero" nota="LCA Dcycle disponible — pendiente verificación acreditada" />
+      </Section>
 
       <footer style={{ marginTop: 64, paddingTop: 24, borderTop: '1px solid var(--border)', color: 'var(--text-muted)', fontSize: 12, display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
         <span>Urbidermis, S.L. · ESPR (UE) 2024/1781</span>
