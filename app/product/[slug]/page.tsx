@@ -8,7 +8,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   return (
     <section style={{ marginBottom: 40 }}>
       <h2 style={{
-        fontSize: 12, fontWeight: 600, letterSpacing: '0.08em',
+        fontSize: 14, fontWeight: 600, letterSpacing: '0.06em',
         textTransform: 'uppercase', color: 'var(--cds-text-secondary)',
         marginBottom: 16, paddingBottom: 8, borderBottom: '1px solid var(--cds-border-subtle-00)'
       }}>{title}</h2>
@@ -102,7 +102,7 @@ export default async function ProductPage({ params }: { params: { slug: string }
       </header>
 
       {/* B · PRODUCTO */}
-      <Section title="B · Identificación del producto">
+      <Section title="Identificación del producto">
         <Row label="Nombre comercial" value={nombre} />
         <Row label="Referencia" value={ref.referencia} mono />
         <Row label="Tipología" value={ref.tipologia} />
@@ -117,7 +117,7 @@ export default async function ProductPage({ params }: { params: { slug: string }
 
       {/* C · FABRICANTE */}
       {empresa && (
-        <Section title="C · Fabricante">
+        <Section title="Fabricante">
           <Row label="Razón social" value={empresa.nombre} />
           <Row label="Nombre comercial" value={empresa.nombre_comercial} />
           <Row label="Domicilio social" value={empresa.domicilio} />
@@ -133,7 +133,7 @@ export default async function ProductPage({ params }: { params: { slug: string }
 
       {/* D · MATERIALES */}
       {(matPrincipal.length > 0 || matSecundario.length > 0) && (
-        <Section title="D · Materiales y contenido reciclado">
+        <Section title="Materiales y contenido reciclado">
           {[...matPrincipal.map((m,i) => ({m,i,tipo:'principal'})), ...matSecundario.map((m,i) => ({m,i,tipo:'secundario'}))].filter(({m}) => m).map(({m, i, tipo}) => (
             <div key={`${tipo}-${i}`} style={{ marginBottom: 24, paddingBottom: 24, borderBottom: '1px solid var(--cds-border-subtle-00)' }}>
               <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--cds-text-secondary)', marginBottom: 8 }}>
@@ -149,16 +149,23 @@ export default async function ProductPage({ params }: { params: { slug: string }
               <Row label="Reciclable" value={m.reciclable === 'Sí' ? '✓ Sí' : m.reciclable} />
             </div>
           ))}
-          <Row label="Embalaje — masa" value={ref.embalaje_kg ? `${ref.embalaje_kg} kg` : undefined} />
-        <Row label="Embalaje — tipo" value={ref.packaging_tipo} />
-        <Row label="Embalaje — contenido reciclado" value={ref.packaging_recycled_pct ? `${ref.packaging_recycled_pct}%` : undefined} />
-        <Row label="Embalaje — clase reciclabilidad" value={ref.packaging_recyclability_class} />
+          {ref.embalaje_kg && (
+          <div style={{ marginBottom: 24, paddingBottom: 24, borderBottom: '1px solid var(--cds-border-subtle-00)' }}>
+            <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--cds-text-secondary)', marginBottom: 8 }}>
+              Embalaje
+            </div>
+            <Row label="Masa" value={ref.embalaje_kg ? `${ref.embalaje_kg} kg` : undefined} />
+            <Row label="Tipo" value={ref.packaging_tipo} />
+            <Row label="Contenido reciclado" value={ref.packaging_recycled_pct ? `${ref.packaging_recycled_pct}%` : undefined} />
+            <Row label="Clase de reciclabilidad" value={ref.packaging_recyclability_class === 'A' ? '✓ A — Reciclable' : ref.packaging_recyclability_class} />
+          </div>
+        )}
         </Section>
       )}
 
       {/* E · LCA */}
       {lca && (
-        <Section title="E · Huella de carbono y LCA">
+        <Section title="Huella de carbono y LCA">
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 1, marginBottom: 24, background: 'var(--cds-border-subtle-00)' }}>
             <LCACard label="GWP sin biogénico" value={lca.gwp_no_biogenico} unit="kg CO₂ eq" />
             <LCACard label="GWP con biogénico" value={lca.gwp_con_biogenico} unit="kg CO₂ eq" />
@@ -179,7 +186,7 @@ export default async function ProductPage({ params }: { params: { slug: string }
 
       {/* F · NORMAS */}
       {normas.length > 0 && (
-        <Section title="F · Normas aplicables">
+        <Section title="Normas aplicables">
           {normas.map((norma: any, i: number) => norma && (
             <div key={i} style={{ padding: '10px 0', borderBottom: '1px solid var(--cds-border-subtle-00)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16 }}>
@@ -194,7 +201,7 @@ export default async function ProductPage({ params }: { params: { slug: string }
 
       {/* G · CERTIFICACIONES */}
       {certificaciones.length > 0 && (
-        <Section title="G · Certificaciones">
+        <Section title="Certificaciones">
           {certificaciones.map((cert: any, i: number) => cert && (
             <div key={i} style={{ padding: '12px 0', borderBottom: '1px solid var(--cds-border-subtle-00)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16 }}>
@@ -215,7 +222,7 @@ export default async function ProductPage({ params }: { params: { slug: string }
       )}
 
       {/* H · MASA */}
-      <Section title="H · Masa del producto">
+      <Section title="Masa del producto">
         <Row label="Peso total del producto" value={ref.peso_kg ? `${ref.peso_kg} kg` : undefined} />
         {masa && <>
           <Row label="Listones / superficie" value={masa.listones ? `${masa.listones} kg` : undefined} />
@@ -227,7 +234,7 @@ export default async function ProductPage({ params }: { params: { slug: string }
 
       {/* I · SOSTENIBILIDAD */}
       {coleccion && (
-        <Section title="I · Sostenibilidad y fin de vida">
+        <Section title="Sostenibilidad y fin de vida">
           <Row label="Reparabilidad" value={coleccion.reparabilidad} />
           <Row label="Desmontaje" value={coleccion.desmontaje} />
           <Row label="Vida útil declarada" value={coleccion.vida_util_anos ? `${coleccion.vida_util_anos} años` : undefined} />
@@ -240,7 +247,7 @@ export default async function ProductPage({ params }: { params: { slug: string }
       )}
 
       {/* J · SUSTANCIAS */}
-      <Section title="J · Sustancias y cumplimiento químico">
+      <Section title="Sustancias y cumplimiento químico">
         <RowPending label="Sustancias de preocupación (SVHC)" nota="Solicitar SDS a cada proveedor" />
         <RowPending label="SVHC — Candidate List ECHA" nota="Confirmar si contienen SVHC >0,1% en peso" />
         <RowPending label="Declaración REACH" nota="Emitir declaración formal Reglamento (CE) 1907/2006" />
@@ -248,7 +255,7 @@ export default async function ProductPage({ params }: { params: { slug: string }
 
       {/* K · DOCUMENTOS */}
       {documentos.length > 0 && (
-        <Section title="K · Documentación técnica">
+        <Section title="Documentación técnica">
           {documentos.map((doc: any, i: number) => (
             <div key={i} style={{ padding: '10px 0', borderBottom: '1px solid var(--cds-border-subtle-00)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16 }}>
               <div>
@@ -266,7 +273,7 @@ export default async function ProductPage({ params }: { params: { slug: string }
       )}
 
       {/* L · DECLARACIONES */}
-      <Section title="L · Declaraciones de conformidad">
+      <Section title="Declaraciones de conformidad">
         <RowPending label="Declaración EUDR" nota="Emitir declaración formal de diligencia debida (madera)" />
         <RowPending label="Declaración REACH" nota="Emitir declaración formal Reglamento (CE) 1907/2006" />
         <RowPending label="Declaración conformidad ESPR" nota="Emitir cuando entre en vigor el acto delegado" />
