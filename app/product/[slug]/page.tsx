@@ -89,6 +89,11 @@ export default async function ProductPage({ params }: { params: { slug: string }
         <div style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--cds-interactive)', marginBottom: 6 }}>{ref.referencia}</div>
         <h1 style={{ fontSize: 28, fontWeight: 300, letterSpacing: '-0.01em', lineHeight: 1.2, marginBottom: 8 }}>{nombre}</h1>
         {ref.dpp_issued_at && <p style={{ color: 'var(--cds-text-secondary)', fontSize: 13 }}>Emitido: {ref.dpp_issued_at}</p>}
+        <div style={{ marginTop: 8, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          {ref.dpp_status && <span style={{ fontSize: 11, background: ref.dpp_status === 'Active' ? 'var(--cds-support-success-bg)' : 'var(--cds-layer-01)', color: ref.dpp_status === 'Active' ? 'var(--cds-support-success)' : 'var(--cds-text-secondary)', padding: '2px 8px', border: '1px solid currentColor' }}>{ref.dpp_status}</span>}
+          {ref.schema_version && <span style={{ fontSize: 11, color: 'var(--cds-text-secondary)', padding: '2px 8px', border: '1px solid var(--cds-border-subtle-00)' }}>Schema v{ref.schema_version}</span>}
+          {ref.espr_product_category && <span style={{ fontSize: 11, color: 'var(--cds-text-secondary)', padding: '2px 8px', border: '1px solid var(--cds-border-subtle-00)' }}>{ref.espr_product_category}</span>}
+        </div>
         {ref.dpp_uuid && (
           <p style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--cds-text-secondary)', marginTop: 8 }}>
             UUID: {ref.dpp_uuid}
@@ -144,7 +149,10 @@ export default async function ProductPage({ params }: { params: { slug: string }
               <Row label="Reciclable" value={m.reciclable === 'Sí' ? '✓ Sí' : m.reciclable} />
             </div>
           ))}
-          <Row label="Embalaje (excluido del peso)" value={ref.embalaje_kg ? `${ref.embalaje_kg} kg · Cartón canal BC · 100% reciclado · Clase A` : undefined} />
+          <Row label="Embalaje — masa" value={ref.embalaje_kg ? `${ref.embalaje_kg} kg` : undefined} />
+        <Row label="Embalaje — tipo" value={ref.packaging_tipo} />
+        <Row label="Embalaje — contenido reciclado" value={ref.packaging_recycled_pct ? `${ref.packaging_recycled_pct}%` : undefined} />
+        <Row label="Embalaje — clase reciclabilidad" value={ref.packaging_recyclability_class} />
         </Section>
       )}
 
@@ -214,7 +222,7 @@ export default async function ProductPage({ params }: { params: { slug: string }
           <Row label="Estructura" value={masa.estructura ? `${masa.estructura} kg` : undefined} />
           <Row label="Tornillería" value={masa.tornilleria ? `${masa.tornilleria} kg` : undefined} />
         </>}
-        <Row label="Embalaje (excluido)" value={ref.embalaje_kg ? `${ref.embalaje_kg} kg` : undefined} />
+        <Row label="Embalaje (excluido del producto)" value={ref.embalaje_kg ? `${ref.embalaje_kg} kg` : undefined} />
       </Section>
 
       {/* I · SOSTENIBILIDAD */}
