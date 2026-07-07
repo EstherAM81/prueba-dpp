@@ -18,6 +18,7 @@ function getText(prop: any): string {
   if (!prop) return "";
   if (prop.type === "title") return prop.title?.map((t: any) => t.plain_text).join("") ?? "";
   if (prop.type === "rich_text") return prop.rich_text?.map((t: any) => t.plain_text).join("") ?? "";
+  if (prop.type === "text") return prop.rich_text?.map((t: any) => t.plain_text).join("") ?? "";
   if (prop.type === "select") return prop.select?.name ?? "";
   if (prop.type === "multi_select") return prop.multi_select?.map((s: any) => s.name).join(" · ") ?? "";
   if (prop.type === "number") return prop.number != null ? prop.number.toString() : "";
