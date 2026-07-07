@@ -46,98 +46,81 @@ export default function Home() {
     const active = filters[filterKey as keyof typeof filters] === value
     return (
       <button
+        className={`filter-btn${active ? ' active' : ''}`}
         onClick={() => setFilters(f => ({ ...f, [filterKey]: value }))}
-        style={{
-          padding: '5px 14px', borderRadius: 20,
-          border: `1px solid ${active ? 'var(--text)' : 'var(--border)'}`,
-          background: active ? 'var(--text)' : 'var(--surface)',
-          color: active ? 'white' : 'var(--text)',
-          fontSize: 12, cursor: 'pointer', fontFamily: 'var(--font-sans)',
-          transition: 'all 0.15s'
-        }}
       >{label}</button>
     )
   }
 
   return (
-    <main style={{ maxWidth: 960, margin: '0 auto', padding: '48px 24px' }}>
+    <main style={{ maxWidth: 1056, margin: '0 auto', padding: '48px 16px' }}>
 
       {/* HEADER */}
-      <header style={{ marginBottom: 48 }}>
-        <div style={{ marginBottom: 16 }}>
-          <span style={{
-            fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '0.12em',
-            color: 'var(--text-muted)', textTransform: 'uppercase',
-            background: 'var(--accent-light)', padding: '4px 10px', borderRadius: 4
-          }}>Digital Product Passport</span>
-        </div>
-        <h1 style={{ fontSize: 40, fontWeight: 300, letterSpacing: '-0.02em', marginBottom: 8 }}>HARPO</h1>
-        <p style={{ color: 'var(--text-muted)', fontSize: 14 }}>Miguel Milá & Gonzalo Milá · 2014 · Urbidermis, S.L.</p>
+      <header style={{ borderBottom: '1px solid var(--cds-border-subtle-00)', paddingBottom: 32, marginBottom: 40 }}>
+        <p style={{ fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '0.08em', color: 'var(--cds-text-secondary)', textTransform: 'uppercase', marginBottom: 12 }}>
+          Digital Product Passport
+        </p>
+        <h1 style={{ fontSize: 42, fontWeight: 300, letterSpacing: '-0.01em', marginBottom: 8, color: 'var(--cds-text-primary)' }}>HARPO</h1>
+        <p style={{ fontSize: 14, color: 'var(--cds-text-secondary)', fontWeight: 300 }}>
+          Miguel Milá & Gonzalo Milá · 2014 · Urbidermis, S.L.
+        </p>
       </header>
 
       {/* BENEFICIOS */}
-      <div style={{ display: 'flex', gap: 12, marginBottom: 48, flexWrap: 'wrap' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 1, marginBottom: 40, background: 'var(--cds-border-subtle-00)' }}>
         {[
           { icon: '♻', title: 'Cradle to Cradle®', desc: 'Primera empresa del mundo en certificar mobiliario urbano C2C' },
           { icon: '🌲', title: 'FSC & PEFC', desc: 'Madera certificada de origen sostenible' },
           { icon: '⟳', title: 'Vida útil 25 años', desc: 'Alta reparabilidad y repuestos disponibles' },
         ].map(b => (
-          <div key={b.title} style={{
-            background: 'var(--surface)', border: '1px solid var(--border)',
-            borderRadius: 8, padding: '20px 24px', flex: 1, minWidth: 180
-          }}>
-            <div style={{ fontSize: 18, marginBottom: 8 }}>{b.icon}</div>
-            <div style={{ fontWeight: 500, fontSize: 13, marginBottom: 4 }}>{b.title}</div>
-            <div style={{ fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.5 }}>{b.desc}</div>
+          <div key={b.title} style={{ background: 'var(--cds-background)', padding: '24px 20px' }}>
+            <div style={{ fontSize: 20, marginBottom: 10 }}>{b.icon}</div>
+            <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 6 }}>{b.title}</div>
+            <div style={{ fontSize: 13, color: 'var(--cds-text-secondary)', lineHeight: 1.5 }}>{b.desc}</div>
           </div>
         ))}
       </div>
 
       {/* FILTROS */}
-      <div style={{ marginBottom: 32, display: 'flex', flexDirection: 'column', gap: 10 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-          <span style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', width: 70 }}>Tipología</span>
-          <FilterBtn filterKey="tipologia" value="all" label="Todos" />
-          {['Banco','Banqueta','Mesa','Lounge chair','Chaise longue'].map(t => (
-            <FilterBtn key={t} filterKey="tipologia" value={t} label={t} />
-          ))}
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-          <span style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', width: 70 }}>Longitud</span>
-          <FilterBtn filterKey="longitud" value="all" label="Todos" />
-          {['0.6','1.2','1.75','3'].map(l => (
-            <FilterBtn key={l} filterKey="longitud" value={l} label={`${l} m`} />
-          ))}
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-          <span style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', width: 70 }}>Material</span>
-          <FilterBtn filterKey="material" value="all" label="Todos" />
-          {['Aluminio','Madera tropical','Pino europeo'].map(m => (
-            <FilterBtn key={m} filterKey="material" value={m} label={m} />
+      <div style={{ background: 'var(--cds-background)', border: '1px solid var(--cds-border-subtle-00)', padding: '20px 24px', marginBottom: 32 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {[
+            { key: 'tipologia', label: 'Tipología', options: ['Banco','Banqueta','Mesa','Lounge chair','Chaise longue'] },
+            { key: 'longitud', label: 'Longitud', options: ['0.6 m:0.6','1.2 m:1.2','1.75 m:1.75','3 m:3'] },
+            { key: 'material', label: 'Material', options: ['Aluminio','Madera tropical','Pino europeo'] },
+          ].map(({ key, label, options }) => (
+            <div key={key} style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+              <span style={{ fontSize: 12, color: 'var(--cds-text-secondary)', width: 72, flexShrink: 0 }}>{label}</span>
+              <FilterBtn filterKey={key} value="all" label="Todos" />
+              {options.map(o => {
+                const [lbl, val] = o.includes(':') ? o.split(':') : [o, o]
+                return <FilterBtn key={val} filterKey={key} value={val} label={lbl} />
+              })}
+            </div>
           ))}
         </div>
       </div>
 
       {/* GRID */}
+      {filtered.length === 0 && (
+        <p style={{ color: 'var(--cds-text-secondary)', fontSize: 14, padding: '32px 0' }}>No hay referencias con estos filtros.</p>
+      )}
+
       {ORDER.map(tip => {
         const items = byTipologia[tip]
         if (!items?.length) return null
         return (
-          <section key={tip} style={{ marginBottom: 32 }}>
-            <h2 style={{
-              fontSize: 11, fontWeight: 600, letterSpacing: '0.1em',
-              textTransform: 'uppercase', color: 'var(--text-muted)',
-              marginBottom: 12, paddingBottom: 8, borderBottom: '1px solid var(--border)'
-            }}>{tip}</h2>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(220px,1fr))', gap: 12 }}>
+          <section key={tip} style={{ marginBottom: 40 }}>
+            <h2 style={{ fontSize: 12, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--cds-text-secondary)', marginBottom: 12, paddingBottom: 8, borderBottom: '1px solid var(--cds-border-subtle-00)' }}>
+              {tip}
+            </h2>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 1, background: 'var(--cds-border-subtle-00)' }}>
               {items.map(r => (
-                <Link key={r.id} href={`/product/${r.referencia}`} style={{
-                  background: 'var(--surface)', border: '1px solid var(--border)',
-                  borderRadius: 8, padding: '20px 24px', display: 'block',
-                  textDecoration: 'none', transition: 'border-color 0.15s'
-                }}>
-                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 13, fontWeight: 500, marginBottom: 6 }}>{r.referencia}</div>
-                  <div style={{ fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.4 }}>{r.nombre_comercial_completo}</div>
+                <Link key={r.id} href={`/product/${r.referencia}`} className="cds-tile">
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 500, color: 'var(--cds-interactive)', marginBottom: 6 }}>{r.referencia}</div>
+                  <div style={{ fontSize: 13, color: 'var(--cds-text-secondary)', lineHeight: 1.4 }}>
+                    {r.nombre_comercial_completo.replace(/@/g, '').trim()}
+                  </div>
                 </Link>
               ))}
             </div>
@@ -145,12 +128,8 @@ export default function Home() {
         )
       })}
 
-      {filtered.length === 0 && (
-        <p style={{ color: 'var(--text-muted)', fontSize: 14, padding: '32px 0' }}>No hay referencias con estos filtros.</p>
-      )}
-
-      <footer style={{ marginTop: 64, paddingTop: 24, borderTop: '1px solid var(--border)', color: 'var(--text-muted)', fontSize: 12 }}>
-        <p>Urbidermis, S.L. · DPP v1.0 · ESPR (UE) 2024/1781</p>
+      <footer style={{ marginTop: 64, paddingTop: 16, borderTop: '1px solid var(--cds-border-subtle-00)', color: 'var(--cds-text-secondary)', fontSize: 12 }}>
+        Urbidermis, S.L. · DPP v1.0 · ESPR (UE) 2024/1781
       </footer>
     </main>
   )

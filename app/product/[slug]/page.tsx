@@ -1,42 +1,18 @@
-'use client'
-
-import { useState, useEffect } from 'react'
+import { getReferencia, getLCA, getMaterial, getColeccion, getEmpresa, getCertificacion, getNorma, getDocumentos, getMasa } from '../../../lib/notion'
+import { notFound } from 'next/navigation'
 import Link from 'next/link'
 
-interface DPPData {
-  ref: any
-  empresa: any
-  lca: any
-  documentos: any[]
-  masa: any
-  matPrincipal: any[]
-  matSecundario: any[]
-  coleccion: any
-  certificaciones: any[]
-  normas: any[]
-}
+export const revalidate = 3600
 
-const GWP_MAX_COLLECTION = 350 // kg CO2 approximate max in collection for bar scale
-
-function Section({ title, children, defaultOpen = true }: { title: string; children: React.ReactNode; defaultOpen?: boolean }) {
-  const [open, setOpen] = useState(defaultOpen)
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section style={{ marginBottom: 32 }}>
-      <button
-        onClick={() => setOpen(o => !o)}
-        style={{
-          width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-          background: 'none', border: 'none', borderBottom: '1px solid var(--border)',
-          paddingBottom: 8, marginBottom: open ? 16 : 0, cursor: defaultOpen ? 'default' : 'pointer',
-          textAlign: 'left'
-        }}
-      >
-        <h2 style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--text-muted)', margin: 0 }}>
-          {title}
-        </h2>
-        {!defaultOpen && <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{open ? '▲' : '▼'}</span>}
-      </button>
-      {open && children}
+    <section style={{ marginBottom: 40 }}>
+      <h2 style={{
+        fontSize: 12, fontWeight: 600, letterSpacing: '0.08em',
+        textTransform: 'uppercase', color: 'var(--cds-text-secondary)',
+        marginBottom: 16, paddingBottom: 8, borderBottom: '1px solid var(--cds-border-subtle-00)'
+      }}>{title}</h2>
+      {children}
     </section>
   )
 }
@@ -44,10 +20,10 @@ function Section({ title, children, defaultOpen = true }: { title: string; child
 function Row({ label, value, mono, link }: { label: string; value?: string; mono?: boolean; link?: boolean }) {
   if (!value) return null
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '220px 1fr', gap: 16, padding: '10px 0', borderBottom: '1px solid var(--border)', alignItems: 'start' }}>
-      <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>{label}</span>
+    <div style={{ display: 'grid', gridTemplateColumns: '220px 1fr', gap: 16, padding: '10px 0', borderBottom: '1px solid var(--cds-border-subtle-00)', alignItems: 'start' }}>
+      <span style={{ fontSize: 13, color: 'var(--cds-text-secondary)' }}>{label}</span>
       {link
-        ? <a href={value} target="_blank" rel="noopener noreferrer" style={{ fontSize: 13, color: 'var(--green)', wordBreak: 'break-all' }}>{value}</a>
+        ? <a href={value} target="_blank" rel="noopener noreferrer" style={{ fontSize: 13, color: 'var(--cds-link-primary)', wordBreak: 'break-all' }}>{value}</a>
         : <span style={{ fontSize: 13, fontFamily: mono ? 'var(--font-mono)' : 'inherit', wordBreak: 'break-all' }}>{value}</span>
       }
     </div>
@@ -56,25 +32,11 @@ function Row({ label, value, mono, link }: { label: string; value?: string; mono
 
 function RowPending({ label, nota }: { label: string; nota?: string }) {
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '220px 1fr', gap: 16, padding: '10px 0', borderBottom: '1px solid var(--border)', alignItems: 'start' }}>
-      <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>{label}</span>
-      <span style={{ fontSize: 12, color: '#C0392B', background: '#FDF0EE', padding: '3px 8px', borderRadius: 4, display: 'inline-block', fontFamily: 'var(--font-mono)' }}>
+    <div style={{ display: 'grid', gridTemplateColumns: '220px 1fr', gap: 16, padding: '10px 0', borderBottom: '1px solid var(--cds-border-subtle-00)', alignItems: 'start' }}>
+      <span style={{ fontSize: 13, color: 'var(--cds-text-secondary)' }}>{label}</span>
+      <span style={{ fontSize: 12, color: 'var(--cds-support-error)', background: 'var(--cds-support-error-bg)', padding: '3px 8px', display: 'inline-block', fontFamily: 'var(--font-mono)' }}>
         ⚠ Pendiente{nota ? ` — ${nota}` : ''}
       </span>
-    </div>
-  )
-}
-
-function MaterialChip({ label, pct, green }: { label: string; pct: string; green?: boolean }) {
-  return (
-    <div style={{
-      display: 'inline-flex', alignItems: 'center', gap: 8,
-      background: green ? 'var(--green-light)' : 'var(--accent-light)',
-      border: `1px solid ${green ? '#2D6A4F33' : 'var(--border)'}`,
-      borderRadius: 8, padding: '10px 16px', marginRight: 8, marginBottom: 8
-    }}>
-      <span style={{ fontSize: 22, fontWeight: 600, fontFamily: 'var(--font-mono)', color: green ? 'var(--green)' : 'var(--text)' }}>{pct}%</span>
-      <span style={{ fontSize: 12, color: green ? 'var(--green)' : 'var(--text-muted)', lineHeight: 1.3 }}>{label}</span>
     </div>
   )
 }
@@ -82,97 +44,62 @@ function MaterialChip({ label, pct, green }: { label: string; pct: string; green
 function LCACard({ label, value, unit }: { label: string; value: string; unit: string }) {
   if (!value) return null
   return (
-    <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 8, padding: '16px 20px' }}>
-      <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{label}</div>
-      <div style={{ fontSize: 18, fontWeight: 500, fontFamily: 'var(--font-mono)' }}>{value}</div>
-      <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>{unit}</div>
+    <div style={{ background: 'var(--cds-background)', border: '1px solid var(--cds-border-subtle-00)', padding: '16px' }}>
+      <div style={{ fontSize: 11, color: 'var(--cds-text-secondary)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{label}</div>
+      <div style={{ fontSize: 20, fontWeight: 300, fontFamily: 'var(--font-mono)', color: 'var(--cds-text-primary)' }}>{value}</div>
+      <div style={{ fontSize: 11, color: 'var(--cds-text-secondary)', marginTop: 4 }}>{unit}</div>
     </div>
   )
 }
 
-export default function ProductPage({ params }: { params: { slug: string } }) {
-  const [data, setData] = useState<DPPData | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [passportOpen, setPassportOpen] = useState(false)
+export default async function ProductPage({ params }: { params: { slug: string } }) {
   const slug = decodeURIComponent(params.slug)
+  const [ref, empresa] = await Promise.all([getReferencia(slug), getEmpresa()])
+  if (!ref) notFound()
 
-  useEffect(() => {
-    fetch(`/api/product/${slug}`)
-      .then(r => r.json())
-      .then(d => { setData(d); setLoading(false) })
-  }, [slug])
+  const [lca, documentos, masa] = await Promise.all([getLCA(slug), getDocumentos(ref.id), getMasa(ref.id)])
 
-  if (loading) return (
-    <main style={{ maxWidth: 800, margin: '0 auto', padding: '48px 24px', color: 'var(--text-muted)' }}>
-      Cargando...
-    </main>
-  )
+  const materiales = await Promise.all([
+    ...ref.matPrincipalIds.map(getMaterial),
+    ...ref.matSecundarioIds.map(getMaterial),
+  ])
+  const matPrincipal = materiales.slice(0, ref.matPrincipalIds.length)
+  const matSecundario = materiales.slice(ref.matPrincipalIds.length)
+  const coleccion = ref.coleccionIds.length ? await getColeccion(ref.coleccionIds[0]) : null
+  const [certificaciones, normas] = await Promise.all([
+    coleccion?.certIds ? Promise.all(coleccion.certIds.map(getCertificacion)) : Promise.resolve([]),
+    coleccion?.normasIds ? Promise.all(coleccion.normasIds.map(getNorma)) : Promise.resolve([]),
+  ])
 
-  if (!data?.ref) return (
-    <main style={{ maxWidth: 800, margin: '0 auto', padding: '48px 24px' }}>
-      <p>Referencia no encontrada.</p>
-    </main>
-  )
-
-  const { ref, empresa, lca, documentos, masa, matPrincipal, matSecundario, coleccion, certificaciones, normas } = data
   const nombre = (ref.nombre_comercial_completo || ref.referencia).replace(/@/g, '').trim()
-  const gwpValue = lca?.gwp_no_biogenico ? parseFloat(lca.gwp_no_biogenico) : 0
-  const gwpPct = Math.min((gwpValue / GWP_MAX_COLLECTION) * 100, 100)
 
   return (
-    <main style={{ maxWidth: 800, margin: '0 auto', padding: '48px 24px' }}>
+    <main style={{ maxWidth: 800, margin: '0 auto', padding: '48px 16px' }}>
 
-      <Link href="/" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: 'var(--text-muted)', fontSize: 13, marginBottom: 32 }}>
+      <Link href="/" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: 'var(--cds-link-primary)', fontSize: 13, marginBottom: 32 }}>
         ← Todas las referencias
       </Link>
 
       {/* HEADER */}
-      <header style={{ marginBottom: 40 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16, flexWrap: 'wrap' }}>
-          <div>
-            <div style={{ display: 'flex', gap: 8, marginBottom: 12, flexWrap: 'wrap', alignItems: 'center' }}>
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '0.12em', color: 'var(--text-muted)', textTransform: 'uppercase', background: 'var(--accent-light)', padding: '4px 10px', borderRadius: 4 }}>
-                Digital Product Passport · v{ref.dpp_version || '1.0'}
-              </span>
-              {ref.tipologia && <span style={{ fontSize: 12, fontWeight: 500, background: 'var(--accent-light)', padding: '3px 10px', borderRadius: 4 }}>{ref.tipologia}</span>}
-            </div>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 14, color: 'var(--text-muted)', marginBottom: 6 }}>{ref.referencia}</div>
-            <h1 style={{ fontSize: 26, fontWeight: 300, letterSpacing: '-0.02em', lineHeight: 1.2 }}>{nombre}</h1>
-            {ref.dpp_issued_at && <p style={{ marginTop: 8, color: 'var(--text-muted)', fontSize: 13 }}>Emitido: {ref.dpp_issued_at}</p>}
-          </div>
-
-          {/* PASSPORT ID — secundario */}
-          <div style={{ minWidth: 200 }}>
-            <div style={{ background: 'var(--accent-light)', borderRadius: 8, padding: '12px 16px', fontSize: 12 }}>
-              <div style={{ color: 'var(--text-muted)', marginBottom: 4, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Pasaporte digital</div>
-              {ref.dpp_uuid && <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, marginBottom: 8, wordBreak: 'break-all' }}>{ref.dpp_uuid}</div>}
-              <button
-                onClick={() => setPassportOpen(o => !o)}
-                style={{ fontSize: 11, color: 'var(--text-muted)', background: 'none', border: '1px solid var(--border)', borderRadius: 4, padding: '3px 8px', cursor: 'pointer' }}
-              >
-                {passportOpen ? 'Ocultar detalles' : 'Ver detalles técnicos'}
-              </button>
-              {passportOpen && (
-                <div style={{ marginTop: 10, borderTop: '1px solid var(--border)', paddingTop: 10 }}>
-                  <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 2 }}>Versión</div>
-                  <div style={{ fontSize: 12, marginBottom: 8 }}>{ref.dpp_version || '1.0'}</div>
-                  <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 2 }}>Estado</div>
-                  <div style={{ fontSize: 12, marginBottom: 8 }}>Active</div>
-                  {ref.dpp_url && <>
-                    <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 2 }}>URL pública</div>
-                    <a href={ref.dpp_url} target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, color: 'var(--green)', wordBreak: 'break-all' }}>{ref.dpp_url}</a>
-                  </>}
-                </div>
-              )}
-            </div>
-          </div>
+      <header style={{ borderBottom: '1px solid var(--cds-border-subtle-00)', paddingBottom: 24, marginBottom: 40 }}>
+        <div style={{ display: 'flex', gap: 8, marginBottom: 12, flexWrap: 'wrap' }}>
+          <span className="cds-tag">Digital Product Passport · v{ref.dpp_version || '1.0'}</span>
+          {ref.tipologia && <span className="cds-tag">{ref.tipologia}</span>}
         </div>
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--cds-interactive)', marginBottom: 6 }}>{ref.referencia}</div>
+        <h1 style={{ fontSize: 28, fontWeight: 300, letterSpacing: '-0.01em', lineHeight: 1.2, marginBottom: 8 }}>{nombre}</h1>
+        {ref.dpp_issued_at && <p style={{ color: 'var(--cds-text-secondary)', fontSize: 13 }}>Emitido: {ref.dpp_issued_at}</p>}
+        {ref.dpp_uuid && (
+          <p style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--cds-text-secondary)', marginTop: 8 }}>
+            UUID: {ref.dpp_uuid}
+          </p>
+        )}
       </header>
 
       {/* B · PRODUCTO */}
       <Section title="B · Identificación del producto">
         <Row label="Nombre comercial" value={nombre} />
-        <Row label="Modelo / Referencia" value={ref.referencia} mono />
+        <Row label="Referencia" value={ref.referencia} mono />
         <Row label="Tipología" value={ref.tipologia} />
         <Row label="Colección" value={coleccion?.name} />
         {coleccion?.ano_diseno && <Row label="Año de diseño" value={coleccion.ano_diseno} />}
@@ -202,19 +129,16 @@ export default function ProductPage({ params }: { params: { slug: string } }) {
       {/* D · MATERIALES */}
       {(matPrincipal.length > 0 || matSecundario.length > 0) && (
         <Section title="D · Materiales y contenido reciclado">
-          {[...matPrincipal, ...matSecundario].filter(Boolean).map((m: any, i: number) => (
-            <div key={i} style={{ marginBottom: 24, paddingBottom: 24, borderBottom: i < matPrincipal.length + matSecundario.length - 2 ? '1px solid var(--border)' : 'none' }}>
-              <div style={{ fontSize: 13, fontWeight: 500, marginBottom: 12 }}>{m.name}</div>
-              <div style={{ marginBottom: 12 }}>
-                {m.recycled_content && m.recycled_content !== '0' && (
-                  <MaterialChip label="Reciclado" pct={m.recycled_content} green />
-                )}
-                {m.virgin_content && m.virgin_content !== '0' && (
-                  <MaterialChip label="Virgen" pct={m.virgin_content} />
-                )}
+          {[...matPrincipal.map((m,i) => ({m,i,tipo:'principal'})), ...matSecundario.map((m,i) => ({m,i,tipo:'secundario'}))].filter(({m}) => m).map(({m, i, tipo}) => (
+            <div key={`${tipo}-${i}`} style={{ marginBottom: 24, paddingBottom: 24, borderBottom: '1px solid var(--cds-border-subtle-00)' }}>
+              <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--cds-text-secondary)', marginBottom: 8 }}>
+                Material {tipo}
               </div>
+              <Row label="Material" value={m.name} />
+              <Row label="Aleación / clasificación" value={m.tipo_material !== m.name ? m.tipo_material : undefined} />
               <Row label="Origen" value={m.origen} />
-              <Row label="Aleación / clasificación" value={m.tipo_material} />
+              <Row label="Contenido reciclado" value={m.recycled_content && m.recycled_content !== '0' ? `${m.recycled_content}%` : undefined} />
+              <Row label="Contenido virgen" value={m.virgin_content && m.virgin_content !== '0' ? `${m.virgin_content}%` : undefined} />
               <Row label="Tratamiento superficie" value={m.tratamiento} />
               <Row label="Especie madera" value={m.especie_madera} />
               <Row label="Reciclable" value={m.reciclable === 'Sí' ? '✓ Sí' : m.reciclable} />
@@ -227,21 +151,7 @@ export default function ProductPage({ params }: { params: { slug: string } }) {
       {/* E · LCA */}
       {lca && (
         <Section title="E · Huella de carbono y LCA">
-          {gwpValue > 0 && (
-            <div style={{ marginBottom: 24 }}>
-              <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 6 }}>
-                GWP sin biogénico — {lca.gwp_no_biogenico} kg CO₂ eq
-              </div>
-              <div style={{ background: 'var(--border)', borderRadius: 4, height: 8, overflow: 'hidden' }}>
-                <div style={{ width: `${gwpPct}%`, height: '100%', background: 'var(--green)', borderRadius: 4, transition: 'width 0.6s ease' }} />
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>
-                <span>0 kg CO₂</span>
-                <span>{GWP_MAX_COLLECTION} kg CO₂</span>
-              </div>
-            </div>
-          )}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 12, marginBottom: 24 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 1, marginBottom: 24, background: 'var(--cds-border-subtle-00)' }}>
             <LCACard label="GWP sin biogénico" value={lca.gwp_no_biogenico} unit="kg CO₂ eq" />
             <LCACard label="GWP con biogénico" value={lca.gwp_con_biogenico} unit="kg CO₂ eq" />
             <LCACard label="Energía no renovable" value={lca.energia_no_renovable} unit="MJ" />
@@ -259,16 +169,16 @@ export default function ProductPage({ params }: { params: { slug: string } }) {
         </Section>
       )}
 
-      {/* F · NORMAS — desplegable */}
+      {/* F · NORMAS */}
       {normas.length > 0 && (
-        <Section title="F · Normas aplicables" defaultOpen={false}>
+        <Section title="F · Normas aplicables">
           {normas.map((norma: any, i: number) => norma && (
-            <div key={i} style={{ padding: '10px 0', borderBottom: '1px solid var(--border)' }}>
+            <div key={i} style={{ padding: '10px 0', borderBottom: '1px solid var(--cds-border-subtle-00)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16 }}>
                 <div style={{ fontWeight: 500, fontSize: 13, fontFamily: 'var(--font-mono)' }}>{norma.name}</div>
-                {norma.ambito && <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{norma.ambito}</div>}
+                {norma.ambito && <div style={{ fontSize: 12, color: 'var(--cds-text-secondary)' }}>{norma.ambito}</div>}
               </div>
-              {norma.descripcion && <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4, lineHeight: 1.5 }}>{norma.descripcion}</div>}
+              {norma.descripcion && <div style={{ fontSize: 12, color: 'var(--cds-text-secondary)', marginTop: 4, lineHeight: 1.5 }}>{norma.descripcion}</div>}
             </div>
           ))}
         </Section>
@@ -278,15 +188,15 @@ export default function ProductPage({ params }: { params: { slug: string } }) {
       {certificaciones.length > 0 && (
         <Section title="G · Certificaciones">
           {certificaciones.map((cert: any, i: number) => cert && (
-            <div key={i} style={{ padding: '12px 0', borderBottom: '1px solid var(--border)' }}>
+            <div key={i} style={{ padding: '12px 0', borderBottom: '1px solid var(--cds-border-subtle-00)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16 }}>
                 <div>
                   <div style={{ fontWeight: 500, fontSize: 13, marginBottom: 4 }}>{cert.name}</div>
-                  <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{cert.organismo}{cert.tipo ? ` · ${cert.tipo}` : ''}</div>
-                  {cert.ambito && <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{cert.ambito}</div>}
+                  <div style={{ fontSize: 12, color: 'var(--cds-text-secondary)' }}>{cert.organismo}{cert.tipo ? ` · ${cert.tipo}` : ''}</div>
+                  {cert.ambito && <div style={{ fontSize: 12, color: 'var(--cds-text-secondary)' }}>{cert.ambito}</div>}
                 </div>
                 {cert.pdf && (
-                  <a href={cert.pdf} target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, color: 'var(--green)', whiteSpace: 'nowrap', background: 'var(--green-light)', padding: '4px 10px', borderRadius: 4 }}>
+                  <a href={cert.pdf} target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, color: 'var(--cds-link-primary)', whiteSpace: 'nowrap', border: '1px solid var(--cds-border-subtle-01)', padding: '4px 10px' }}>
                     Ver PDF →
                   </a>
                 )}
@@ -332,13 +242,13 @@ export default function ProductPage({ params }: { params: { slug: string } }) {
       {documentos.length > 0 && (
         <Section title="K · Documentación técnica">
           {documentos.map((doc: any, i: number) => (
-            <div key={i} style={{ padding: '10px 0', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16 }}>
+            <div key={i} style={{ padding: '10px 0', borderBottom: '1px solid var(--cds-border-subtle-00)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16 }}>
               <div>
                 <div style={{ fontSize: 13, fontWeight: 500, marginBottom: 2 }}>{doc.name}</div>
-                <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{doc.tipo}{doc.idiomas ? ` · ${doc.idiomas}` : ''}</div>
+                <div style={{ fontSize: 12, color: 'var(--cds-text-secondary)' }}>{doc.tipo}{doc.idiomas ? ` · ${doc.idiomas}` : ''}</div>
               </div>
               {doc.url && (
-                <a href={doc.url} target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, color: 'var(--green)', whiteSpace: 'nowrap', background: 'var(--green-light)', padding: '4px 10px', borderRadius: 4 }}>
+                <a href={doc.url} target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, color: 'var(--cds-link-primary)', whiteSpace: 'nowrap', border: '1px solid var(--cds-border-subtle-01)', padding: '4px 10px' }}>
                   Descargar →
                 </a>
               )}
@@ -355,9 +265,9 @@ export default function ProductPage({ params }: { params: { slug: string } }) {
         <RowPending label="EPD verificada por tercero" nota="LCA Dcycle disponible — pendiente verificación acreditada" />
       </Section>
 
-      <footer style={{ marginTop: 64, paddingTop: 24, borderTop: '1px solid var(--border)', color: 'var(--text-muted)', fontSize: 12, display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
+      <footer style={{ marginTop: 64, paddingTop: 16, borderTop: '1px solid var(--cds-border-subtle-00)', color: 'var(--cds-text-secondary)', fontSize: 12, display: 'flex', justifyContent: 'space-between' }}>
         <span>Urbidermis, S.L. · ESPR (UE) 2024/1781</span>
-        {ref.dpp_uuid && <span style={{ fontFamily: 'var(--font-mono)' }}>DPP {ref.dpp_uuid.slice(0, 8)}</span>}
+        {ref.dpp_uuid && <span style={{ fontFamily: 'var(--font-mono)' }}>{ref.dpp_uuid.slice(0,8)}</span>}
       </footer>
     </main>
   )
