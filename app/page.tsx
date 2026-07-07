@@ -1,4 +1,4 @@
-import { getAllReferencias } from '../lib/notion'
+tengoimport { getAllReferencias } from '../lib/notion'
 import Link from 'next/link'
 
 export const revalidate = 3600
