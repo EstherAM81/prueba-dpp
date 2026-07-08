@@ -274,7 +274,8 @@ export default async function ProductPage({ params }: { params: { slug: string }
         <Section title="Documentación técnica">
           {documentos.filter((doc: any) => {
             const n = doc.name || ''
-            return n.includes('LCA') || n.includes('Assembly') || n.includes('Mantenimiento') || n.includes('Disassembly')
+            const t = doc.tipo || ''
+            return n.includes('LCA') || n.includes('Assembly') || n.includes('Mantenimiento') || n.includes('Disassembly') || t.toLowerCase().includes('care')
           }).map((doc: any, i: number) => (
             <div key={i} style={{ padding: '10px 0', borderBottom: '1px solid var(--cds-border-subtle-00)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16 }}>
               <div>
