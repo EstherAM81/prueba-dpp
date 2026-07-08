@@ -70,7 +70,7 @@ export async function getReferencia(slug: string) {
     tipologia: getText(p["tipologia"]),
     longitud_m: getText(p["longitud_m"]),
     peso_kg: getText(p["peso_kg"]),
-    embalaje_kg: getText(p["Embalaje cartón (kg)"]),
+    embalaje_kg: getText(p["embalaje_kg"]) || getText(p["Embalaje cartón (kg)"]),
     dim_largo_cm: getText(p["dim_largo_cm"]),
     dim_ancho_cm: getText(p["dim_ancho_cm"]),
     dim_alto_cm: getText(p["dim_alto_cm"]),
