@@ -191,10 +191,19 @@ export async function getNorma(id: string) {
 
 export async function getDocumentos(referenciaId: string) {
   try {
-    const res = await notion.databases.query({
+    // Try with the ID as-is first
+    const cleanId = referenciaId.replace(/-/g, "")
+    let res = await notion.databases.query({
       database_id: DB.DOCUMENTOS,
       filter: { property: "Referencia a", relation: { contains: referenciaId } },
     });
+    // If no results, try without dashes
+    if (!res.results.length) {
+      res = await notion.databases.query({
+        database_id: DB.DOCUMENTOS,
+        filter: { property: "Referencia a", relation: { contains: cleanId } },
+      });
+    }
     return res.results.map((page: any) => {
       const p = page.properties;
       return {
