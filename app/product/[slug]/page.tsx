@@ -199,22 +199,40 @@ export default async function ProductPage({ params }: { params: { slug: string }
       {/* CERTIFICACIONES */}
       {certificaciones.length > 0 && (
         <Section title="Certificaciones">
-          {certificaciones.map((cert: any, i: number) => cert && (
-            <div key={i} style={{ padding: '12px 0', borderBottom: '1px solid var(--cds-border-subtle-00)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16 }}>
-                <div>
-                  <div style={{ fontWeight: 500, fontSize: 13, marginBottom: 4 }}>{cert.name}</div>
-                  <div style={{ fontSize: 12, color: 'var(--cds-text-secondary)' }}>{cert.organismo}{cert.tipo ? ` · ${cert.tipo}` : ''}</div>
-                  {cert.ambito && <div style={{ fontSize: 12, color: 'var(--cds-text-secondary)' }}>{cert.ambito}</div>}
+          {(() => {
+            // Detect wood type from materials to show correct cert
+            const allMaterials = [...matPrincipal, ...matSecundario].filter(Boolean)
+            const hasFSC = allMaterials.some((m: any) => (m.name || '').toLowerCase().includes('tropical') || (m.origen || '').toLowerCase().includes('tropical'))
+            const hasPEFC = allMaterials.some((m: any) => (m.name || '').toLowerCase().includes('pino') || (m.name || '').toLowerCase().includes('pefc') || (m.name || '').toLowerCase().includes('pine'))
+
+            return certificaciones.filter((cert: any) => {
+              if (!cert) return false
+              const n = (cert.name || '').toUpperCase()
+              // Always show CE and C2C
+              if (n.includes('CE') || n.includes('CRADLE')) return true
+              // Show FSC only if tropical wood
+              if (n.includes('FSC') && !n.includes('PEFC')) return hasFSC || (!hasFSC && !hasPEFC)
+              // Show PEFC only if pine wood
+              if (n.includes('PEFC') && !n.includes('FSC')) return hasPEFC
+              // Show FSC+PEFC combined if both
+              return true
+            }).map((cert: any, i: number) => (
+              <div key={i} style={{ padding: '12px 0', borderBottom: '1px solid var(--cds-border-subtle-00)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16 }}>
+                  <div>
+                    <div style={{ fontWeight: 500, fontSize: 13, marginBottom: 4 }}>{cert.name}</div>
+                    <div style={{ fontSize: 12, color: 'var(--cds-text-secondary)' }}>{cert.organismo}{cert.tipo ? ` · ${cert.tipo}` : ''}</div>
+                    {cert.ambito && <div style={{ fontSize: 12, color: 'var(--cds-text-secondary)' }}>{cert.ambito}</div>}
+                  </div>
+                  {cert.pdf && (
+                    <a href={cert.pdf} target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, color: 'var(--cds-link-primary)', whiteSpace: 'nowrap', border: '1px solid var(--cds-border-subtle-01)', padding: '4px 10px' }}>
+                      Ver PDF →
+                    </a>
+                  )}
                 </div>
-                {cert.pdf && (
-                  <a href={cert.pdf} target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, color: 'var(--cds-link-primary)', whiteSpace: 'nowrap', border: '1px solid var(--cds-border-subtle-01)', padding: '4px 10px' }}>
-                    Ver PDF →
-                  </a>
-                )}
               </div>
-            </div>
-          ))}
+            ))
+          })()}
         </Section>
       )}
 
@@ -236,7 +254,8 @@ export default async function ProductPage({ params }: { params: { slug: string }
           <Row label="Desmontaje" value={coleccion.desmontaje} />
           <Row label="Vida útil declarada" value={coleccion.vida_util_anos ? `${coleccion.vida_util_anos} años` : undefined} />
           <Row label="Fin de vida" value="Desmontaje manual. Separación por material para reciclaje diferenciado." />
-          <Row label="Gestión fin de vida" value="A cargo del operador responsable de la instalación, según normativa local de residuos" />
+          <Row label="Gestión fin de vida" value="A cargo del operador responsable de la instalación, según normativa local de residuos." />
+          <Row label="Solicitud de repuestos" value="spare-parts@urbidermis.com" />
           <RowPending label="Clase de reciclabilidad (A-D)" nota="Realizar evaluación según metodología declarada" />
           <RowPending label="URL take-back / fin de vida" nota="Crear URL pública QR-resolvable" />
           <RowPending label="URL repuestos (10+ años)" nota="Crear página o email específico para recambios" />
@@ -253,7 +272,10 @@ export default async function ProductPage({ params }: { params: { slug: string }
       {/* DOCUMENTOS */}
       {documentos.length > 0 && (
         <Section title="Documentación técnica">
-          {documentos.map((doc: any, i: number) => (
+          {documentos.filter((doc: any) => {
+            const n = doc.name || ''
+            return n.includes('LCA') || n.includes('Assembly') || n.includes('Mantenimiento') || n.includes('Disassembly')
+          }).map((doc: any, i: number) => (
             <div key={i} style={{ padding: '10px 0', borderBottom: '1px solid var(--cds-border-subtle-00)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16 }}>
               <div>
                 <div style={{ fontSize: 13, fontWeight: 500, marginBottom: 2 }}>{doc.name}</div>
