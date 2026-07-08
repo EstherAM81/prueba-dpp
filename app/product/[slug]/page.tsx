@@ -152,10 +152,10 @@ export default async function ProductPage({ params }: { params: { slug: string }
           {/* EMBALAJE */}
           <div style={{ marginBottom: 8 }}>
             <SubHeader label="Embalaje" />
-            <Row label="Masa" value={ref.embalaje_kg ? `${ref.embalaje_kg} kg` : '4.64 kg'} />
-            <Row label="Tipo" value={ref.packaging_tipo || 'Cartón canal BC'} />
-            <Row label="Contenido reciclado" value={ref.packaging_recycled_pct ? `${ref.packaging_recycled_pct}%` : '100%'} />
-            <Row label="Clase de reciclabilidad" value={ref.packaging_recyclability_class ? `✓ ${ref.packaging_recyclability_class} — Reciclable` : '✓ A — Reciclable'} />
+            <Row label="Masa" value={ref.embalaje_kg ? `${ref.embalaje_kg} kg` : undefined} />
+            <Row label="Tipo" value={ref.packaging_tipo} />
+            <Row label="Contenido reciclado" value={ref.packaging_recycled_pct ? `${ref.packaging_recycled_pct}%` : undefined} />
+            <Row label="Clase de reciclabilidad" value={ref.packaging_recyclability_class ? `✓ ${ref.packaging_recyclability_class} — Reciclable` : undefined} />
           </div>
         </Section>
       )}
