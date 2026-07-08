@@ -70,7 +70,7 @@ export default function Home() {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 1, marginBottom: 40, background: 'var(--cds-border-subtle-00)' }}>
         {[
           { icon: '♻', title: 'Cradle to Cradle®', desc: 'Primera empresa del mundo en certificar mobiliario urbano C2C' },
-          { icon: '🌲', title: 'FSC & PEFC', desc: 'Madera certificada de origen sostenible' },
+          { icon: '🌲', title: 'FSC & PEFC', desc: 'Madera 100% certificada de origen sostenible' },
           { icon: '⟳', title: 'Vida útil 25 años', desc: 'Alta reparabilidad y repuestos disponibles' },
         ].map(b => (
           <div key={b.title} style={{ background: 'var(--cds-background)', padding: '24px 20px' }}>
